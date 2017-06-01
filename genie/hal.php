@@ -21,6 +21,7 @@ function genie_hal_dist($t) {
 // retourne 0 si aucun a faire ou echec lors de la tentative
 //
 function executer_une_syndication_hal() {
+
 	// Et un site 'oui' de plus de 2 heures, qui passe en 'sus' s'il echoue
 	$where = "NOT(" . sql_date_proche('date_syndic', (0 - _PERIODE_SYNDICATION_HAL) , "MINUTE") . ' AND statut="publie")';
 	$id_hal = sql_getfetsel("id_hal", "spip_hals", $where, '', "date_syndic", "1");
@@ -43,6 +44,7 @@ function executer_une_syndication_hal() {
  * @return bool|string
  */
 function hal_a_jour($now_id_hal) {
+
 	$call = debug_backtrace();
 	if ($call[1]['function']!=='queue_start_job')
 		spip_log("hal_a_jour doit etre appelee par JobQueue Cf. http://trac.rezo.net/trac/spip/changeset/10294",_LOG_ERREUR);
@@ -50,7 +52,7 @@ function hal_a_jour($now_id_hal) {
 	$row = sql_fetsel("*", "spip_hals", "id_hal=".intval($now_id_hal).' AND statut = "publie"');
 
 	if (!$row) return 0;
-	
+
 	$url_syndic = $row['url_syndic'];
 	if ($row['moderation'] == 'oui')
 		$moderation = 'dispo';	// a valider
@@ -65,7 +67,9 @@ function hal_a_jour($now_id_hal) {
 		
 	$url_syndic = parametre_url(parametre_url($url_syndic,'rows',$limite,'&'),'fl','*','&');
 
-	$json = recuperer_page($url_syndic, true);
+	//$json = recuperer_page($url_syndic, true);
+    $json = file_get_contents($url_syndic);
+
 	if (!$json)
 		$publications = _T('hal:avis_echec_recuperation');
 	else
